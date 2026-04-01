@@ -11,12 +11,9 @@ exports.handler = async function(event, context) {
   }
 
   const auth = event.headers['authorization'] || event.headers['Authorization'];
-  if (!auth) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Missing authorization' }) };
-  }
+  if (!auth) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Missing authorization' }) };
 
   try {
-    // Étape 1 : récupérer l'organisation et le solde réel
     const orgRes = await fetch('https://thirdparty.qonto.com/v2/organization', {
       headers: { 'Authorization': auth }
     });
@@ -25,12 +22,10 @@ exports.handler = async function(event, context) {
 
     const bankAccount = orgData.organization?.bank_accounts?.[0];
     const bankAccountId = bankAccount?.id;
-    const soldeReel = bankAccount?.balance;
-    const iban = bankAccount?.iban;
+    const soldeReel = bankAccount?.balance_cents ? bankAccount.balance_cents / 100 : bankAccount?.balance;
 
-    if (!bankAccountId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'No bank account found' }) };
+    if (!bankAccountId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'No bank account' }) };
 
-    // Étape 2 : récupérer les transactions (hors virements internes)
     const txRes = await fetch(
       `https://thirdparty.qonto.com/v2/transactions?bank_account_id=${bankAccountId}&includes[]=attachments&per_page=100`,
       { headers: { 'Authorization': auth } }
@@ -38,20 +33,15 @@ exports.handler = async function(event, context) {
     const txData = await txRes.json();
     if (!txRes.ok) return { statusCode: txRes.status, headers, body: JSON.stringify(txData) };
 
-    // Filtrer les virements internes qui faussent le solde
-    const filtered = (txData.transactions || []).filter(t => 
-      !(t.operation_type === 'transfer' && t.is_external_transaction === false && t.label === 'Compte principal')
-    );
-
-    return { 
-      statusCode: 200, 
-      headers, 
-      body: JSON.stringify({ 
-        transactions: filtered,
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        transactions: txData.transactions || [],
         solde_reel: soldeReel,
-        iban: iban,
+        iban: bankAccount?.iban,
         meta: txData.meta
-      }) 
+      })
     };
 
   } catch (err) {
