@@ -2,7 +2,7 @@ exports.handler = async function(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Content-Type': 'application/json'
   };
 
@@ -15,34 +15,27 @@ exports.handler = async function(event, context) {
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'Missing authorization' }) };
   }
 
-  const path = event.queryStringParameters?.path || 'transactions';
-const url = `https://thirdparty.qonto.com/v2/transactions`;
-
   try {
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': auth,
-        'Content-Type': 'application/json'
-      }
+    // Étape 1 : récupérer le bank_account_id
+    const orgRes = await fetch('https://thirdparty.qonto.com/v2/organization', {
+      headers: { 'Authorization': auth }
     });
+    const orgData = await orgRes.json();
+    if (!orgRes.ok) return { statusCode: orgRes.status, headers, body: JSON.stringify(orgData) };
 
-    const data = await response.json();
+    const bankAccountId = orgData.organization?.bank_accounts?.[0]?.id;
+    if (!bankAccountId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'No bank account found' }) };
 
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        headers,
-        body: JSON.stringify({ error: data.message || 'Qonto API error', details: data })
-      };
-    }
+    // Étape 2 : récupérer les transactions
+    const txRes = await fetch(`https://thirdparty.qonto.com/v2/transactions?bank_account_id=${bankAccountId}&includes[]=attachments`, {
+      headers: { 'Authorization': auth }
+    });
+    const txData = await txRes.json();
+    if (!txRes.ok) return { statusCode: txRes.status, headers, body: JSON.stringify(txData) };
 
-    return { statusCode: 200, headers, body: JSON.stringify(data) };
+    return { statusCode: 200, headers, body: JSON.stringify(txData) };
 
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: err.message })
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
