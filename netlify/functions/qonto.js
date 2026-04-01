@@ -16,7 +16,7 @@ exports.handler = async function(event, context) {
   }
 
   const path = event.queryStringParameters?.path || 'transactions';
-  const url = `https://thirdparty.qonto.com/v2/${path}?status=completed&includes[]=attachments&per_page=50`;
+const url = `https://thirdparty.qonto.com/v2/transactions`;
 
   try {
     const response = await fetch(url, {
