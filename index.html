@@ -601,20 +601,29 @@ function syncQonto(){
   const secret=localStorage.getItem('ecm_qonto_secret');
   if(!login||!secret){btn.textContent='Synchroniser Qonto';btn.disabled=false;showPage('connexion');return;}
 
-fetch('/.netlify/functions/qonto', {
+  fetch('/.netlify/functions/qonto?path=transactions', {
     headers:{'Authorization': login+':'+secret, 'Content-Type':'application/json'}
   })
   .then(r=>{if(!r.ok)throw new Error('API error '+r.status);return r.json();})
   .then(data=>{
     const txs = data.transactions || [];
-    const mapped = txs.slice(0,50).map((t,i)=>({
+    const catMap = {
+      'treasury_and_interco':'Virement interne','salaries_and_expenses':'Salaires',
+      'it_and_electronics':'Matériel','food_and_drink':'Soirée / Événement',
+      'entertainment':'Soirée / Événement','sport_and_fitness':'Compétition sportive',
+      'transport_and_car':'Transport','other_expense':'Autre',
+      'bank_fees_and_software':'Autre','office_and_administrative':'Matériel',
+      'marketing_and_communication':'Sponsor / Subvention','revenue':'Sponsor / Subvention'
+    };
+    const mapped = txs.slice(0,100).map((t,i)=>({
       id: t.id || 'qonto_'+i,
       date: (t.settled_at||t.emitted_at||'').slice(0,10),
-      label: t.label || t.reference || 'Transaction',
+      label: t.label || t.reference || t.clean_counterparty_name || 'Transaction',
       type: t.side==='credit'?'Recette':'Dépense',
       montant: Math.abs(t.amount),
-      cat: t.category||'Autre',
-      ticket: (t.attachments&&t.attachments.length>0)?t.attachments[0].url||t.attachments[0].file_name:null
+      cat: catMap[t.category] || 'Autre',
+      ticket: (t.attachment_ids&&t.attachment_ids.length>0) ? t.attachment_ids[0] : 
+              (t.attachments&&t.attachments.length>0) ? (t.attachments[0].file_name||t.attachments[0].url||'Justificatif') : null
     }));
     S.transactions = mapped;
     document.getElementById('status-label').textContent='Synchronisé — '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
