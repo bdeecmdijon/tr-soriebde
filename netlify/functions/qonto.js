@@ -20,31 +20,12 @@ exports.handler = async function(event, context) {
     const orgData = await orgRes.json();
     if (!orgRes.ok) return { statusCode: orgRes.status, headers, body: JSON.stringify(orgData) };
 
-    const bankAccount = orgData.organization?.bank_accounts?.[0];
-    const bankAccountId = bankAccount?.id;
-    const soldeReel = bankAccount?.balance_cents ? bankAccount.balance_cents / 100 : bankAccount?.balance;
+    const bankAccounts = orgData.organization?.bank_accounts || [];
+    
+    // Récupérer les transactions de TOUS les comptes
+    let allTransactions = [];
+    let soldeTotal = 0;
+    let allComptes = [];
 
-    if (!bankAccountId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'No bank account' }) };
-
-    const txRes = await fetch(
-      `https://thirdparty.qonto.com/v2/transactions?bank_account_id=${bankAccountId}&includes[]=attachments&per_page=100`,
-      { headers: { 'Authorization': auth } }
-    );
-    const txData = await txRes.json();
-    if (!txRes.ok) return { statusCode: txRes.status, headers, body: JSON.stringify(txData) };
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        transactions: txData.transactions || [],
-        solde_reel: soldeReel,
-        iban: bankAccount?.iban,
-        meta: txData.meta
-      })
-    };
-
-  } catch (err) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
-  }
-};
+    for (const account of bankAccounts) {
+      soldeTotal += account.balance_cents ? account.balance_cents / 100 : (account.balance ||
