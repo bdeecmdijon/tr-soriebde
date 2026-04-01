@@ -601,7 +601,7 @@ function syncQonto(){
   const secret=localStorage.getItem('ecm_qonto_secret');
   if(!login||!secret){btn.textContent='Synchroniser Qonto';btn.disabled=false;showPage('connexion');return;}
 
-  fetch('https://thirdparty.qonto.com/v2/transactions?status=completed&includes[]=attachments', {
+fetch('/.netlify/functions/qonto?path=transactions', {
     headers:{'Authorization': login+':'+secret, 'Content-Type':'application/json'}
   })
   .then(r=>{if(!r.ok)throw new Error('API error '+r.status);return r.json();})
