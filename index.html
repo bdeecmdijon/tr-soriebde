@@ -586,13 +586,18 @@ function validerImport(){
 }
 
 function openModal(){
-  document.getElementById('import-modal').classList.add('open');
+  const m=document.getElementById('import-modal');
+  if(!m){console.error('Modal non trouvée');return;}
+  m.classList.add('open');
   document.getElementById('btn-valider').style.display='none';
   document.getElementById('import-preview').innerHTML='';
   document.getElementById('import-msg').textContent='';
   pendingTx=[];
 }
-function closeModal(){document.getElementById('import-modal').classList.remove('open');}
+function closeModal(){
+  const m=document.getElementById('import-modal');
+  if(m)m.classList.remove('open');
+}
 
 function handleFile(input){
   const f=input.files[0];if(!f)return;
