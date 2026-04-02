@@ -539,6 +539,18 @@ label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: bl
     <div class="form-row">
       <div><label>Note</label><textarea id="em-note" rows="2"></textarea></div>
     </div>
+    <hr class="divider">
+    <div>
+      <label>🧾 Justificatif manuel</label>
+      <div id="em-receipt-preview" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0">
+          📎 Joindre une photo / PDF
+          <input type="file" id="em-receipt-file" accept="image/*,application/pdf" style="display:none" onchange="previewReceipt(this)">
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="clearReceipt()" id="em-receipt-clear" style="display:none">✕ Supprimer</button>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('edit-modal')">Annuler</button>
       <button class="btn btn-primary" onclick="saveEdit()">💾 Enregistrer</button>
@@ -753,7 +765,7 @@ function getSolde() {
 }
 function getTotalRecettes() { return state.transactions.filter(t=>t.montant>0).reduce((s,t)=>s+t.montant,0); }
 function getTotalDepenses() { return state.transactions.filter(t=>t.montant<0).reduce((s,t)=>s+t.montant,0); }
-function getTicketsMissing() { return state.transactions.filter(t=>t.justReqis && !t.hasJustif && !t.justPerdu).length; }
+function getTicketsMissing() { return state.transactions.filter(t=>t.justReqis && !txHasAnyJustif(t) && !t.justPerdu).length; }
 
 function getAllCategories() {
   const cats = new Set();
@@ -762,6 +774,8 @@ function getAllCategories() {
 }
 
 function getProjectById(id) { return state.projects.find(p=>p.id===id); }
+function hasManualReceipt(tx) { return !!(state.edits[tx.id] && state.edits[tx.id].receiptDataUrl); }
+function txHasAnyJustif(tx) { return tx.hasJustif || hasManualReceipt(tx); }
 
 function getProjectStats(projectId) {
   const txs = state.transactions.filter(tx => getTxProject(tx) === projectId);
@@ -918,7 +932,7 @@ function renderDashboard() {
         <td><span class="badge badge-gray">${tx.methode||'—'}</span></td>
         <td>${assoc ? `<span class="badge badge-${assoc.toLowerCase()}">${assoc}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
         <td class="${tx.montant>=0?'amount-pos':'amount-neg'}">${fmtEur(tx.montant)}</td>
-        <td><span class="ticket-dot ${!tx.justReqis?'na':tx.hasJustif?'ok':'missing'}" title="${!tx.justReqis?'Non requis':tx.hasJustif?'Justificatif présent':'Manquant'}"></span></td>
+        <td><span class="ticket-dot ${!tx.justReqis?'na':txHasAnyJustif(tx)?'ok':'missing'}" title="${!tx.justReqis?'Non requis':txHasAnyJustif(tx)?'Justificatif présent':'Manquant'}">${hasManualReceipt(tx)?'📎':''}</span></td>
       </tr>`;
     }).join('')}
     </tbody>
@@ -995,7 +1009,7 @@ function renderJournal() {
       <td style="font-size:11px;color:var(--text-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis">${tx.initiateur||'—'}</td>
       <td class="${tx.montant>=0?'amount-pos':'amount-neg'}" style="white-space:nowrap">${fmtEur(tx.montant)}</td>
       <td class="amount-num" style="font-size:12px;white-space:nowrap">${tx.solde ? tx.solde.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €' : '—'}</td>
-      <td><span class="ticket-dot ${!tx.justReqis?'na':tx.hasJustif?'ok':'missing'}" title="${!tx.justReqis?'Non requis':tx.hasJustif?'OK':'Manquant'}"></span></td>
+      <td><span class="ticket-dot ${!tx.justReqis?'na':txHasAnyJustif(tx)?'ok':'missing'}" title="${!tx.justReqis?'Non requis':txHasAnyJustif(tx)?'OK':'Manquant'}">${hasManualReceipt(tx)?'📎':''}</span></td>
       <td><button class="btn btn-ghost btn-sm" onclick="openEdit('${tx.id}')">✏️</button></td>
     </tr>`;
   }).join('')}
@@ -1010,8 +1024,8 @@ function renderJournal() {
 // ══════════════════════════════════════════════════════
 function renderTickets() {
   const required = state.transactions.filter(t => t.justReqis);
-  const ok = required.filter(t => t.hasJustif);
-  const missing = required.filter(t => !t.hasJustif && !t.justPerdu);
+  const ok = required.filter(t => txHasAnyJustif(t));
+  const missing = required.filter(t => !txHasAnyJustif(t) && !t.justPerdu);
   const lost = required.filter(t => t.justPerdu);
 
   return `
@@ -1040,8 +1054,10 @@ function renderTicketTable(txs) {
     <tbody>
     ${txs.map(tx => {
       let statut, badge;
+      const manualR = hasManualReceipt(tx);
       if (!tx.justReqis) { statut='Non requis'; badge='badge-gray'; }
-      else if (tx.hasJustif) { statut='✅ Présent'; badge='badge-green'; }
+      else if (tx.hasJustif) { statut='✅ Présent (Qonto)'; badge='badge-green'; }
+      else if (manualR) { statut='📎 Présent (manuel)'; badge='badge-green'; }
       else if (tx.justPerdu) { statut='⚠️ Perdu'; badge='badge-orange'; }
       else { statut='❌ Manquant'; badge='badge-red'; }
       return `<tr>
@@ -1063,8 +1079,8 @@ function switchTicketTab(btn, tab) {
   btn.classList.add('active');
   const required = state.transactions.filter(t => t.justReqis);
   let txs;
-  if (tab === 'missing') txs = required.filter(t => !t.hasJustif && !t.justPerdu);
-  else if (tab === 'ok') txs = required.filter(t => t.hasJustif);
+  if (tab === 'missing') txs = required.filter(t => !txHasAnyJustif(t) && !t.justPerdu);
+  else if (tab === 'ok') txs = required.filter(t => txHasAnyJustif(t));
   else txs = required;
   document.getElementById('ticket-content').innerHTML = renderTicketTable(txs);
 }
@@ -1515,6 +1531,8 @@ function toggleAI() {
 // ══════════════════════════════════════════════════════
 //  EDIT MODAL
 // ══════════════════════════════════════════════════════
+let pendingReceiptDataUrl = null; // base64 dataUrl of manually attached receipt
+
 function openEdit(txId) {
   editingTxId = txId;
   const tx = state.transactions.find(t=>t.id===txId);
@@ -1524,6 +1542,7 @@ function openEdit(txId) {
   document.getElementById('em-category').value = edit.category || tx.categorie || '';
   document.getElementById('em-note').value = edit.note || tx.noteQonto || '';
   document.getElementById('em-assoc').value = edit.assoc || '';
+
   // Populate project select
   const sel = document.getElementById('em-project');
   sel.innerHTML = '<option value="">— Aucun projet —</option>';
@@ -1534,6 +1553,7 @@ function openEdit(txId) {
     if (edit.projectId === p.id) opt.selected = true;
     sel.appendChild(opt);
   });
+
   // Populate cats datalist
   const dl = document.getElementById('cats-list');
   dl.innerHTML = '';
@@ -1542,18 +1562,77 @@ function openEdit(txId) {
     opt.value = c;
     dl.appendChild(opt);
   });
+
+  // Receipt preview
+  pendingReceiptDataUrl = null;
+  const preview = document.getElementById('em-receipt-preview');
+  const clearBtn = document.getElementById('em-receipt-clear');
+  document.getElementById('em-receipt-file').value = '';
+  if (edit.receiptDataUrl) {
+    showReceiptPreview(edit.receiptDataUrl, preview, clearBtn);
+    pendingReceiptDataUrl = edit.receiptDataUrl;
+  } else {
+    preview.innerHTML = '';
+    clearBtn.style.display = 'none';
+  }
+
   document.getElementById('edit-modal').classList.add('open');
+}
+
+function previewReceipt(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    pendingReceiptDataUrl = e.target.result;
+    const preview = document.getElementById('em-receipt-preview');
+    const clearBtn = document.getElementById('em-receipt-clear');
+    showReceiptPreview(pendingReceiptDataUrl, preview, clearBtn);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showReceiptPreview(dataUrl, preview, clearBtn) {
+  const isImg = dataUrl.startsWith('data:image');
+  preview.innerHTML = isImg
+    ? `<div style="position:relative;display:inline-block">
+        <img src="${dataUrl}" style="max-height:140px;max-width:100%;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${dataUrl}')">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Cliquer pour agrandir</div>
+       </div>`
+    : `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--navy-dim);border-radius:8px">
+        <span style="font-size:22px">📄</span>
+        <span style="font-size:12px;font-weight:600">PDF joint</span>
+       </div>`;
+  clearBtn.style.display = 'inline-flex';
+}
+
+function clearReceipt() {
+  pendingReceiptDataUrl = null;
+  document.getElementById('em-receipt-preview').innerHTML = '';
+  document.getElementById('em-receipt-clear').style.display = 'none';
+  document.getElementById('em-receipt-file').value = '';
+  // Remove from saved edit too
+  if (editingTxId && state.edits[editingTxId]) {
+    delete state.edits[editingTxId].receiptDataUrl;
+    saveState();
+  }
 }
 
 function saveEdit() {
   if (!editingTxId) return;
+  const existing = state.edits[editingTxId] || {};
   state.edits[editingTxId] = {
+    ...existing,
     label: document.getElementById('em-label').value,
     category: document.getElementById('em-category').value,
     note: document.getElementById('em-note').value,
     assoc: document.getElementById('em-assoc').value,
     projectId: document.getElementById('em-project').value,
   };
+  // Save receipt if provided
+  if (pendingReceiptDataUrl) {
+    state.edits[editingTxId].receiptDataUrl = pendingReceiptDataUrl;
+  }
   saveState();
   closeModal('edit-modal');
   renderPage();
@@ -1886,41 +1965,38 @@ async function startScan() {
 }
 
 async function analyzeTicket(dataUrl) {
-  // Extract base64 from dataUrl
   const base64 = dataUrl.split(',')[1];
   const mediaType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 500,
-      system: `Tu es un OCR financier. Analyse ce ticket de caisse ou justificatif et retourne UNIQUEMENT un objet JSON valide (sans markdown, sans backticks) avec ces champs :
-{
-  "merchant": "nom du marchand ou fournisseur",
-  "amount": montant_total_en_nombre_flottant (négatif pour une dépense),
-  "date": "DD/MM/YYYY ou null",
-  "category": "catégorie probable (ex: Restauration, Transport, Matériel, Location, Communication, etc.)",
-  "description": "description courte de l'achat"
-}
-Si tu ne peux pas lire un champ, mets null.`,
+      max_tokens: 600,
+      system: 'Tu es un OCR financier. Analyse ce ticket et retourne UNIQUEMENT un JSON valide sans markdown : {"merchant":"nom","amount":-12.50,"date":"DD/MM/YYYY","category":"Restauration","description":"texte"}. amount est negatif pour une depense. Mets null si illisible.',
       messages: [{
         role: 'user',
-        content: [{
-          type: 'image',
-          source: { type: 'base64', media_type: mediaType, data: base64 }
-        }, {
-          type: 'text',
-          text: 'Analyse ce ticket et retourne le JSON.'
-        }]
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+          { type: 'text', text: 'Analyse ce ticket et retourne uniquement le JSON.' }
+        ]
       }]
     })
   });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || ('Erreur API ' + response.status));
+  }
+
   const data = await response.json();
-  const text = data.content?.[0]?.text || '{}';
-  try { return JSON.parse(text.replace(/```json|```/g, '').trim()); }
-  catch(e) { throw new Error('Réponse IA non parsable'); }
+  const text = (data.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Reponse IA illisible : ' + text.slice(0,80)); }
 }
 
 function findBestMatch(parsed) {
