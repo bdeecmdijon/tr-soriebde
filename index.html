@@ -110,8 +110,9 @@ body {
 .solde-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
 .solde-amount {
   font-family: 'Syne', sans-serif;
-  font-size: 22px; font-weight: 800;
+  font-size: 20px; font-weight: 800;
   color: #fff; margin-top: 2px;
+  letter-spacing: -0.03em;
 }
 
 /* ── TOPBAR ── */
@@ -179,8 +180,8 @@ body {
 .stat-icon { font-size: 22px; margin-bottom: 8px; }
 .stat-value {
   font-family: 'Syne', sans-serif;
-  font-weight: 800; font-size: 26px; color: var(--navy);
-  line-height: 1;
+  font-weight: 800; font-size: 24px; color: var(--navy);
+  line-height: 1; letter-spacing: -0.04em;
 }
 .stat-value.pos { color: var(--green); }
 .stat-value.neg { color: var(--red); }
@@ -191,7 +192,7 @@ body {
 table { width: 100%; border-collapse: collapse; }
 th {
   text-align: left; padding: 10px 12px;
-  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
   color: var(--text-muted); border-bottom: 2px solid var(--border);
   font-family: 'DM Mono', monospace; font-weight: 500;
   white-space: nowrap;
@@ -202,9 +203,9 @@ td {
   vertical-align: middle;
 }
 tr:hover td { background: var(--navy-dim); }
-.amount-pos { color: var(--green); font-weight: 600; font-family: 'DM Mono', monospace; }
-.amount-neg { color: var(--red); font-weight: 600; font-family: 'DM Mono', monospace; }
-.amount-num { font-family: 'DM Mono', monospace; }
+.amount-pos { color: var(--green); font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -0.02em; }
+.amount-neg { color: var(--red); font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -0.02em; }
+.amount-num { font-family: 'DM Mono', monospace; letter-spacing: -0.02em; }
 
 /* ── BADGES ── */
 .badge {
@@ -387,7 +388,49 @@ label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: bl
 .project-card:hover { box-shadow: var(--shadow-lg); }
 .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 22px; }
 
-/* ── SCROLLBAR ── */
+/* ── SCANNER ── */
+.drop-zone {
+  border: 2.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg);
+}
+.drop-zone.drag-over { border-color: var(--orange); background: var(--orange-dim); }
+.drop-zone:hover { border-color: var(--orange); }
+.scan-queue { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 18px 0; }
+.scan-thumb {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  overflow: hidden; position: relative;
+  background: var(--card);
+}
+.scan-thumb img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.scan-thumb-label { padding: 7px 9px; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scan-thumb .remove-btn { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.55); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.scan-result-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  background: var(--card);
+  margin-bottom: 12px;
+  display: grid; grid-template-columns: 100px 1fr auto;
+  gap: 14px; align-items: start;
+}
+.scan-result-card img { width: 100px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); }
+.scan-match-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.scan-match-badge.high { background: var(--green-dim); color: var(--green); }
+.scan-match-badge.med { background: rgba(232,82,26,0.12); color: var(--orange); }
+.scan-match-badge.low { background: var(--red-dim); color: var(--red); }
+.scan-status-processing { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; padding: 8px 0; }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+  .scan-result-card { grid-template-columns: 1fr; }
+}
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -420,6 +463,7 @@ label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: bl
     <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span><span>Tableau de bord</span></div>
     <div class="nav-item" data-page="journal"><span class="icon">📋</span><span>Journal</span></div>
     <div class="nav-item" data-page="tickets"><span class="icon">🧾</span><span>Justificatifs</span></div>
+    <div class="nav-item" data-page="scanner"><span class="icon">📸</span><span>Scanner tickets</span></div>
     <div class="nav-section">Analyse</div>
     <div class="nav-item" data-page="analytics"><span class="icon">📈</span><span>Analyse mensuelle</span></div>
     <div class="nav-item" data-page="projects"><span class="icon">🗂️</span><span>Projets</span></div>
@@ -745,7 +789,8 @@ function renderPage() {
   const titles = {
     dashboard:'Tableau de bord', journal:'Journal des transactions',
     tickets:'Justificatifs', analytics:'Analyse mensuelle',
-    projects:'Projets & Événements', bilan:'Bilan financier', ai:'Assistant IA'
+    projects:'Projets & Événements', bilan:'Bilan financier', ai:'Assistant IA',
+    scanner:'📸 Scanner de tickets IA'
   };
   document.getElementById('topbar-title').textContent = titles[currentPage] || '';
   const solde = getSolde();
@@ -760,6 +805,7 @@ function renderPage() {
     case 'projects': content.innerHTML = renderProjects(); break;
     case 'bilan': content.innerHTML = renderBilan(); break;
     case 'ai': content.innerHTML = renderAIPage(); bindAIPage(); break;
+    case 'scanner': content.innerHTML = renderScanner(); bindScanner(); break;
   }
   bindTableEdits();
 }
@@ -1662,6 +1708,293 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.style.opacity = '1';
   setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
+
+// ══════════════════════════════════════════════════════
+//  SCANNER DE TICKETS IA
+// ══════════════════════════════════════════════════════
+let scanQueue = [];   // [{file, dataUrl, name}]
+let scanResults = []; // [{dataUrl, name, parsed, matchedTxId, confidence, linked}]
+
+function renderScanner() {
+  return `
+<div class="section-header">
+  <div class="section-title">📸 Scanner de tickets IA</div>
+</div>
+<div class="card" style="margin-bottom:18px">
+  <div class="card-title">1 — Dépose tes photos de tickets</div>
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('ticket-file-input').click()">
+    <div style="font-size:36px;margin-bottom:10px">📸</div>
+    <div style="font-weight:700;font-size:15px;color:var(--navy)">Glisse des photos ici ou clique pour sélectionner</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:6px">JPG, PNG, WEBP — plusieurs fichiers acceptés</div>
+    <input type="file" id="ticket-file-input" accept="image/*" multiple style="display:none">
+  </div>
+  <div class="scan-queue" id="scan-queue"></div>
+  ${scanQueue.length > 0 ? `
+  <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
+    <button class="btn btn-primary" onclick="startScan()" id="scan-btn">🔍 Analyser ${scanQueue.length} ticket(s) avec l'IA</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearQueue()">✕ Vider</button>
+  </div>` : ''}
+</div>
+
+${scanResults.length > 0 ? `
+<div class="card">
+  <div class="card-title">2 — Résultats & affiliation</div>
+  <div id="scan-results-list">
+    ${scanResults.map((r,i) => renderScanResult(r,i)).join('')}
+  </div>
+  <div style="margin-top:14px;display:flex;gap:10px">
+    <button class="btn btn-primary" onclick="confirmAllLinks()" id="confirm-all-btn">✅ Confirmer toutes les affiliations</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearResults()">🗑 Effacer résultats</button>
+  </div>
+</div>` : ''}
+`;
+}
+
+function renderScanResult(r, i) {
+  if (r.processing) {
+    return `<div class="scan-result-card" id="scan-res-${i}">
+      <img src="${r.dataUrl}" alt="">
+      <div>
+        <div style="font-weight:700;margin-bottom:8px">${r.name}</div>
+        <div class="scan-status-processing"><span class="spin">⏳</span> Analyse IA en cours…</div>
+      </div>
+      <div></div>
+    </div>`;
+  }
+  if (r.error) {
+    return `<div class="scan-result-card" id="scan-res-${i}">
+      <img src="${r.dataUrl}" alt="">
+      <div>
+        <div style="font-weight:700;margin-bottom:6px">${r.name}</div>
+        <div style="color:var(--red);font-size:12px">❌ Erreur : ${r.error}</div>
+      </div>
+      <div></div>
+    </div>`;
+  }
+
+  const p = r.parsed || {};
+  const confClass = r.confidence >= 80 ? 'high' : r.confidence >= 50 ? 'med' : 'low';
+  const confLabel = r.confidence >= 80 ? '🟢 Bonne correspondance' : r.confidence >= 50 ? '🟡 Correspondance partielle' : '🔴 Faible correspondance';
+
+  const tx = r.matchedTxId ? state.transactions.find(t=>t.id===r.matchedTxId) : null;
+
+  return `<div class="scan-result-card" id="scan-res-${i}">
+    <img src="${r.dataUrl}" alt="${r.name}" style="cursor:pointer" onclick="window.open('${r.dataUrl}')">
+    <div>
+      <div style="font-weight:700;margin-bottom:8px;font-size:14px">${r.name}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Marchand</div><div style="font-weight:600">${p.merchant||'—'}</div></div>
+        <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Montant</div><div style="font-weight:700;color:var(--red)">${p.amount!=null?'−'+Math.abs(p.amount).toFixed(2)+' €':'—'}</div></div>
+        <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Date</div><div style="font-weight:600">${p.date||'—'}</div></div>
+        <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Catégorie</div><div style="font-weight:600">${p.category||'—'}</div></div>
+      </div>
+      ${p.description ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-style:italic">${p.description}</div>` : ''}
+      <span class="scan-match-badge ${confClass}">${confLabel} (${r.confidence}%)</span>
+      ${tx ? `
+      <div style="margin-top:10px;padding:9px 12px;background:var(--navy-dim);border-radius:var(--radius-sm)">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Transaction proposée :</div>
+        <div style="font-weight:700">${getTxLabel(tx)}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${fmtDate(tx.date)} · ${fmtEur(tx.montant)}</div>
+        <div style="margin-top:8px">
+          <label style="display:inline;text-transform:none;font-size:12px;color:var(--text);letter-spacing:0">Changer la transaction :</label>
+          <select onchange="scanResults[${i}].matchedTxId=this.value;updateScanResult(${i})" style="margin-top:5px">
+            <option value="${tx.id}" selected>${getTxLabel(tx)} — ${fmtEur(tx.montant)}</option>
+            ${state.transactions.filter(t=>t.montant<0&&t.id!==tx.id).slice(0,30).map(t=>`<option value="${t.id}">${getTxLabel(t)} — ${fmtEur(t.montant)} (${fmtDate(t.date)})</option>`).join('')}
+          </select>
+        </div>
+      </div>` : `
+      <div style="margin-top:10px">
+        <div style="font-size:12px;color:var(--red);margin-bottom:6px">⚠️ Aucune transaction trouvée. Sélectionne manuellement :</div>
+        <select onchange="scanResults[${i}].matchedTxId=this.value;updateScanResult(${i})">
+          <option value="">— Choisir une transaction —</option>
+          ${state.transactions.filter(t=>t.montant<0).slice(0,50).map(t=>`<option value="${t.id}">${getTxLabel(t)} — ${fmtEur(t.montant)} (${fmtDate(t.date)})</option>`).join('')}
+        </select>
+      </div>`}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      ${r.linked ? `<span class="badge badge-green">✅ Affilié</span>` : ''}
+      ${r.matchedTxId ? `<button class="btn btn-primary btn-sm" onclick="linkSingle(${i})">🔗 Affilier</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function updateScanResult(i) {
+  const el = document.getElementById('scan-res-'+i);
+  if (el) el.outerHTML = renderScanResult(scanResults[i], i);
+}
+
+function bindScanner() {
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('ticket-file-input');
+  if (!dropZone || !fileInput) return;
+
+  fileInput.addEventListener('change', (e) => addFiles([...e.target.files]));
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    addFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')));
+  });
+}
+
+function addFiles(files) {
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      scanQueue.push({ file, dataUrl: e.target.result, name: file.name });
+      loaded++;
+      if (loaded === files.length) renderPage();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function clearQueue() { scanQueue = []; renderPage(); }
+function clearResults() { scanResults = []; renderPage(); }
+
+async function startScan() {
+  if (scanQueue.length === 0) return;
+  // Init results with processing state
+  scanResults = scanQueue.map(q => ({ dataUrl: q.dataUrl, name: q.name, processing: true }));
+  scanQueue = [];
+  renderPage();
+
+  // Process each ticket sequentially
+  for (let i = 0; i < scanResults.length; i++) {
+    try {
+      const result = await analyzeTicket(scanResults[i].dataUrl);
+      const match = findBestMatch(result);
+      scanResults[i] = {
+        ...scanResults[i],
+        processing: false,
+        parsed: result,
+        matchedTxId: match.txId,
+        confidence: match.confidence,
+        linked: false,
+      };
+    } catch (e) {
+      scanResults[i] = { ...scanResults[i], processing: false, error: e.message || 'Erreur inconnue' };
+    }
+    // Re-render after each result
+    document.getElementById('content').innerHTML = renderScanner();
+    bindScanner();
+  }
+}
+
+async function analyzeTicket(dataUrl) {
+  // Extract base64 from dataUrl
+  const base64 = dataUrl.split(',')[1];
+  const mediaType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      system: `Tu es un OCR financier. Analyse ce ticket de caisse ou justificatif et retourne UNIQUEMENT un objet JSON valide (sans markdown, sans backticks) avec ces champs :
+{
+  "merchant": "nom du marchand ou fournisseur",
+  "amount": montant_total_en_nombre_flottant (négatif pour une dépense),
+  "date": "DD/MM/YYYY ou null",
+  "category": "catégorie probable (ex: Restauration, Transport, Matériel, Location, Communication, etc.)",
+  "description": "description courte de l'achat"
+}
+Si tu ne peux pas lire un champ, mets null.`,
+      messages: [{
+        role: 'user',
+        content: [{
+          type: 'image',
+          source: { type: 'base64', media_type: mediaType, data: base64 }
+        }, {
+          type: 'text',
+          text: 'Analyse ce ticket et retourne le JSON.'
+        }]
+      }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content?.[0]?.text || '{}';
+  try { return JSON.parse(text.replace(/```json|```/g, '').trim()); }
+  catch(e) { throw new Error('Réponse IA non parsable'); }
+}
+
+function findBestMatch(parsed) {
+  if (!parsed || (!parsed.amount && !parsed.merchant)) return { txId: null, confidence: 0 };
+
+  let best = null, bestScore = 0;
+  const amount = parsed.amount ? Math.abs(parsed.amount) : null;
+  const merchant = (parsed.merchant || '').toLowerCase();
+
+  // Parse ticket date
+  let ticketDate = null;
+  if (parsed.date) {
+    const m = parsed.date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m) ticketDate = new Date(`${m[3]}-${m[2]}-${m[1]}`);
+  }
+
+  state.transactions.filter(tx => tx.montant < 0).forEach(tx => {
+    let score = 0;
+    const txAmt = Math.abs(tx.montant);
+
+    // Amount match (max 60pts)
+    if (amount !== null) {
+      const diff = Math.abs(txAmt - amount);
+      if (diff < 0.01) score += 60;
+      else if (diff < 0.5) score += 45;
+      else if (diff < 2) score += 25;
+      else if (diff / Math.max(txAmt, amount) < 0.05) score += 15;
+    }
+
+    // Merchant match (max 30pts)
+    if (merchant) {
+      const label = getTxLabel(tx).toLowerCase();
+      const contrep = (tx.contrepartie || '').toLowerCase();
+      if (label.includes(merchant) || contrep.includes(merchant)) score += 30;
+      else if (merchant.split(' ').some(w => w.length > 3 && (label.includes(w) || contrep.includes(w)))) score += 15;
+    }
+
+    // Date match (max 10pts)
+    if (ticketDate) {
+      const txDate = new Date(parseDateFr(tx.date));
+      const dayDiff = Math.abs((txDate - ticketDate) / 86400000);
+      if (dayDiff < 1) score += 10;
+      else if (dayDiff < 3) score += 5;
+    }
+
+    if (score > bestScore) { bestScore = score; best = tx.id; }
+  });
+
+  return { txId: best, confidence: Math.min(100, bestScore) };
+}
+
+function linkSingle(i) {
+  const r = scanResults[i];
+  if (!r || !r.matchedTxId) return;
+  // Save ticket note to the transaction edit
+  const p = r.parsed || {};
+  if (!state.edits[r.matchedTxId]) state.edits[r.matchedTxId] = {};
+  const existing = state.edits[r.matchedTxId];
+  if (!existing.note) existing.note = '';
+  existing.note = `[Ticket scanné: ${r.name}]${p.description ? ' — ' + p.description : ''}`;
+  if (p.category && !existing.category) existing.category = p.category;
+  scanResults[i].linked = true;
+  saveState();
+  document.getElementById('scan-res-'+i).outerHTML = renderScanResult(scanResults[i], i);
+  showToast(`🔗 Ticket affilié à : ${getTxLabel(state.transactions.find(t=>t.id===r.matchedTxId)||{})}`);
+}
+
+function confirmAllLinks() {
+  let count = 0;
+  scanResults.forEach((r, i) => {
+    if (r.matchedTxId && !r.linked) { linkSingle(i); count++; }
+  });
+  if (count > 0) showToast(`✅ ${count} ticket(s) affilié(s) avec succès !`);
+  else showToast('Aucun ticket à affilier (déjà fait ou pas de correspondance).');
 }
 
 // ══════════════════════════════════════════════════════
