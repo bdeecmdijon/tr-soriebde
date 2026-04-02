@@ -880,12 +880,42 @@ function parseCSVLine(line, sep){
 
 function validerImport(){
   if(!pendingTx.length){document.getElementById('import-msg').textContent='Importez d\'abord un fichier CSV.';return;}
-  S.transactions=pendingTx;
-  S.solde=pendingTx._solde||pendingTx[0]?.solde||S.solde;
+  
+  // Construire un index des transactions existantes par txId et par empreinte
+  const existingById={};
+  const existingByPrint={};
+  S.transactions.forEach(t=>{
+    if(t.txId)existingById[t.txId]=t;
+    const print=t.date+'|'+t.label+'|'+t.montant;
+    existingByPrint[print]=t;
+  });
+
+  let added=0, skipped=0;
+  pendingTx.forEach(t=>{
+    const print=t.date+'|'+t.label+'|'+t.montant;
+    const existing=existingById[t.txId]||(t.txId?null:existingByPrint[print]);
+    if(existing){
+      // Transaction déjà connue — on préserve tout ce que l'utilisateur a modifié
+      existing.ticketQonto=t.ticketQonto||existing.ticketQonto;
+      existing.ticket=existing.ticket||t.ticketQonto||null;
+      existing.solde=t.solde||existing.solde;
+      skipped++;
+    } else {
+      // Nouvelle transaction — on l'ajoute
+      S.transactions.unshift(t);
+      added++;
+    }
+  });
+
+  // Mettre à jour le solde avec la valeur la plus récente du relevé
+  if(pendingTx._solde)S.solde=pendingTx._solde;
   S.lastSync=new Date().toLocaleDateString('fr-FR');
+  
   save();updateCatFilter();renderAll();
-  document.getElementById('import-msg').innerHTML='<span style="color:var(--green);font-weight:600">Import réussi !</span>';
-  setTimeout(()=>{closeModal();showPage('dashboard');},800);
+  document.getElementById('import-msg').innerHTML=
+    `<span style="color:var(--green);font-weight:600">${added} nouvelle(s) transaction(s) ajoutée(s)</span>` +
+    (skipped?` · <span style="color:var(--text3)">${skipped} déjà présente(s), conservées</span>`:'');
+  setTimeout(()=>{closeModal();showPage('dashboard');},1200);
 }
 
 function openModal(){
